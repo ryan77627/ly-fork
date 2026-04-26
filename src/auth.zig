@@ -36,10 +36,10 @@ pub fn sessionSignalHandler(i: c_int) callconv(.c) void {
 
 pub fn authenticate(allocator: std.mem.Allocator, log_file: *LogFile, options: AuthOptions, current_environment: Environment, login: []const u8, password: []const u8) !void {
     var tty_buffer: [3]u8 = undefined;
-    const tty_str = try std.fmt.bufPrint(&tty_buffer, "7", .{options.tty});
+    const tty_str = try std.fmt.bufPrint(&tty_buffer, "7", .{});
 
     var pam_tty_buffer: [6]u8 = undefined;
-    const pam_tty_str = try std.fmt.bufPrintZ(&pam_tty_buffer, "tty7", .{options.tty});
+    const pam_tty_str = try std.fmt.bufPrintZ(&pam_tty_buffer, "tty7", .{});
 
     // Set the XDG environment variables
     try setXdgEnv(allocator, tty_str, current_environment);
