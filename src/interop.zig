@@ -105,7 +105,7 @@ fn PlatformStruct() type {
                 const basename = std.fs.path.basename(target);
                 var num_str = basename;
                 if (std.mem.startsWith(u8, basename, "tty")) {
-                    num_str = basename.["tty".len..];
+                    num_str = basename["tty".len..];
                 }
 
                 return std.fmt.parseInt(u8, num_str, 10) catch error.NoTtyFound;
