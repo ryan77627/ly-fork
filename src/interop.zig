@@ -99,7 +99,7 @@ fn PlatformStruct() type {
             //    extracted values. If they correspond, parse [dir] to get the
             //    TTY ID
             pub fn getActiveTtyImpl(_: std.mem.Allocator) !u8 {
-                var buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
+                var buffer: [std.fs.max_path_bytes]u8 = undefined;
 
                 const target = std.fs.readLinkAbsolute("/proc/self/fd/0", &buffer) catch return error.NoTtyFound;
                 const basename = std.fs.path.basename(target);
