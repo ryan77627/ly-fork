@@ -502,6 +502,7 @@ fn executeCmd(global_log_file: *LogFile, allocator: std.mem.Allocator, shell: []
     const cmd_str = try std.fmt.bufPrintZ(&cmd_buffer, "{s} {s} {s}", .{ options.setup_cmd, options.login_cmd orelse "", exec_cmd orelse shell });
 
     const args = [_:null]?[*:0]const u8{ shell_z, "-c", cmd_str };
+    global_log_file.file_writer.interface.print("execveing {s} with args {any}...\n", .{cmd_str, args});
     return std.posix.execveZ(shell_z, &args, std.c.environ);
 }
 
