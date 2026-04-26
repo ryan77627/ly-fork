@@ -98,62 +98,17 @@ fn PlatformStruct() type {
             // 4. Finally, compare the major and minor device numbers with the
             //    extracted values. If they correspond, parse [dir] to get the
             //    TTY ID
-            pub fn getActiveTtyImpl(allocator: std.mem.Allocator) !u8 {
-                var file_buffer: [256]u8 = undefined;
-                var tty_major: u16 = undefined;
-                var tty_minor: u16 = undefined;
+            pub fn getActiveTtyImpl(_: std.mem.Allocator) !u8 {
+                var buffer: [std.fs.MAX_PATH_BYTES]u8 = undefined;
 
-                {
-                    var file = try std.fs.openFileAbsolute("/proc/self/stat", .{});
-                    defer file.close();
-
-                    var reader = file.reader(&file_buffer);
-                    var buffer: [1024]u8 = undefined;
-                    const read = try readBuffer(&reader.interface, &buffer);
-
-                    var iterator = std.mem.splitScalar(u8, buffer[0..read], ' ');
-                    var fields: [52][]const u8 = undefined;
-                    var index: usize = 0;
-
-                    while (iterator.next()) |field| {
-                        fields[index] = field;
-                        index += 1;
-                    }
-
-                    const tty_nr = try std.fmt.parseInt(u16, fields[6], 10);
-                    tty_major = tty_nr / 256;
-                    tty_minor = tty_nr % 256;
+                const target = std.fs.readLinkAbsolute("/proc/self/fd/0", &buffer) catch return error.NoTtyFound;
+                const basename = std.fs.path.basename(target);
+                var num_str = basename;
+                if (std.mem.startsWith(u8, basename, "tty")) {
+                    num_str = basename.["tty".len..];
                 }
 
-                var directory = try std.fs.openDirAbsolute("/sys/class/tty", .{ .iterate = true });
-                defer directory.close();
-
-                var iterator = directory.iterate();
-                while (try iterator.next()) |entry| {
-                    const path = try std.fmt.allocPrint(allocator, "/sys/class/tty/{s}/dev", .{entry.name});
-                    defer allocator.free(path);
-
-                    var file = try std.fs.openFileAbsolute(path, .{});
-                    defer file.close();
-
-                    var reader = file.reader(&file_buffer);
-                    var buffer: [16]u8 = undefined;
-                    const read = try readBuffer(&reader.interface, &buffer);
-
-                    var device_iterator = std.mem.splitScalar(u8, buffer[0..(read - 1)], ':');
-                    const device_major_str = device_iterator.next() orelse continue;
-                    const device_minor_str = device_iterator.next() orelse continue;
-
-                    const device_major = try std.fmt.parseInt(u8, device_major_str, 10);
-                    const device_minor = try std.fmt.parseInt(u8, device_minor_str, 10);
-
-                    if (device_major == tty_major and device_minor == tty_minor) {
-                        const tty_id_str = entry.name["tty".len..];
-                        return try std.fmt.parseInt(u8, tty_id_str, 10);
-                    }
-                }
-
-                return error.NoTtyFound;
+                return std.fmt.parseInt(u8, num_str, 10) catch error.NoTtyFound;
             }
 
             // This is very bad parsing, but we only need to get 2 values..
