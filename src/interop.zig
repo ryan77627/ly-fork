@@ -89,15 +89,6 @@ fn PlatformStruct() type {
                 std.posix.setuid(@intCast(entry.uid)) catch return error.SetUserUidFailed;
             }
 
-            // Procedure:
-            // 1. Open /proc/self/stat to retrieve the tty_nr field
-            // 2. Parse the tty_nr field to extract the major and minor device
-            //    numbers
-            // 3. Then, read every /sys/class/tty/[dir]/dev, where [dir] is
-            //    every sub-directory
-            // 4. Finally, compare the major and minor device numbers with the
-            //    extracted values. If they correspond, parse [dir] to get the
-            //    TTY ID
             pub fn getActiveTtyImpl(_: std.mem.Allocator) !u8 {
                 var buffer: [std.fs.max_path_bytes]u8 = undefined;
 
