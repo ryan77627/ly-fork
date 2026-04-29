@@ -92,14 +92,14 @@ fn PlatformStruct() type {
             pub fn getActiveTtyImpl(_: std.mem.Allocator) !u8 {
                 var buffer: [std.fs.max_path_bytes]u8 = undefined;
 
-                const target = std.fs.readLinkAbsolute("/proc/self/fd/0", &buffer) catch return error.NoTtyFound;
-                const basename = std.fs.path.basename(target);
-                var num_str = basename;
-                if (std.mem.startsWith(u8, basename, "tty")) {
-                    num_str = basename["tty".len..];
-                }
+                const tty_file = try std.fs.openFileAbsolute("/sys/class/tty/tty0/active", .{});
+                defer tty_file.close();
+                const bytes_read = try tty_file.readAll(&buffer);
+                const content = std.mem.trimRight(u8, buffer[0..bytes_read], " \n\r");
+                if (content.len <= 3) return error.NoTtyFound;
 
-                return std.fmt.parseInt(u8, num_str, 10) catch error.NoTtyFound;
+                const tty_part = content[3..];
+                return std.fmt.parseInt(u8, tty_part, 10) catch error.NoTtyFound;
             }
 
             // This is very bad parsing, but we only need to get 2 values..
